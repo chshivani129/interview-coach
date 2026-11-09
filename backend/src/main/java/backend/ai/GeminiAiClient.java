@@ -15,16 +15,17 @@ import java.util.Map;
 @ConditionalOnProperty(name = "ai.provider", havingValue = "gemini")
 public class GeminiAiClient implements AiClient {
 
-    private static final String MODEL = "gemini-3.1-flash-lite";
-
+    private final String model;
     private final String apiKey;
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
 
     public GeminiAiClient(
             @Value("${ai.api-key}") String apiKey,
+            @Value("${ai.model}") String model,
             ObjectMapper objectMapper) {
         this.apiKey = apiKey;
+        this.model = model;
         this.objectMapper = objectMapper;
         this.restClient = RestClient.create();
     }
@@ -45,7 +46,7 @@ public class GeminiAiClient implements AiClient {
 
         JsonNode response = restClient.post()
                 .uri("https://generativelanguage.googleapis.com/v1beta/models/"
-                        + MODEL + ":generateContent")
+                        + model + ":generateContent")
                 .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)

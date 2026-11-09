@@ -11,6 +11,21 @@ jobs:
     name: Backend Build
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: coach
+          POSTGRES_USER: coach
+          POSTGRES_PASSWORD: coach
+        ports:
+          - 5433:5432
+        options: >-          
+          --health-cmd "pg_isready -U coach -d coach"          
+          --health-interval 10s        
+          --health-timeout 5s          
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,6 +38,10 @@ jobs:
 
       - name: Build backend
         working-directory: backend
+        env:
+          DB_URL: jdbc:postgresql://localhost:5433/coach
+          DB_USERNAME: coach
+          DB_PASSWORD: coach
         run: ./gradlew clean build
 
   frontend:

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './App.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "${API_BASE_URL}";
+
 interface JobResponse {
   jobId: number
   title: string
@@ -53,7 +55,7 @@ function App() {
     setEvaluations({})
 
     try {
-      const response = await fetch('http://localhost:8080/api/jobs', {
+      const response = await fetch('${API_BASE_URL}/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobDescription }),
@@ -65,7 +67,7 @@ function App() {
       setJob(jobData)
 
       const questionResponse = await fetch(
-        `http://localhost:8080/api/jobs/${jobData.jobId}/questions`
+        `${API_BASE_URL}/api/jobs/${jobData.jobId}/questions`
       )
 
       if (!questionResponse.ok) throw new Error('Unable to load questions.')
@@ -91,7 +93,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/questions/${questionId}/answers`,
+        `${API_BASE_URL}/api/questions/${questionId}/answers`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "${API_BASE_URL}";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 interface JobResponse {
   jobId: number
@@ -55,7 +55,7 @@ function App() {
     setEvaluations({})
 
     try {
-      const response = await fetch('${API_BASE_URL}/api/jobs', {
+      const response = await fetch(`${API_BASE_URL}/api/jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobDescription }),

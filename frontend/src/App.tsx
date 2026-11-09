@@ -1,121 +1,314 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
 
+interface JobResponse {
+  jobId: number
+  title: string
+  seniority: string
+  skills: string[]
+  questionCount: number
+}
+
+interface Question {
+  id: number
+  text: string
+  category: string
+  skill: string
+}
+
+interface Evaluation {
+  attemptId: number
+  questionId: number
+  clarity: number
+  specificity: number
+  depth: number
+  overallScore: number
+  feedback: string
+  improvementTip: string
+  supportingQuotes: string[]
+  latencyMs: number
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [jobDescription, setJobDescription] = useState('')
+  const [job, setJob] = useState<JobResponse | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [answers, setAnswers] = useState<Record<number, string>>({})
+  const [evaluations, setEvaluations] = useState<Record<number, Evaluation>>({})
+  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState<number | null>(null)
+  const [error, setError] = useState('')
+
+  const generateInterview = async () => {
+    if (!jobDescription.trim()) {
+      setError('Please enter a job description first.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setJob(null)
+    setQuestions([])
+    setAnswers({})
+    setEvaluations({})
+
+    try {
+      const response = await fetch('http://localhost:8080/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobDescription }),
+      })
+
+      if (!response.ok) throw new Error('Unable to generate interview.')
+
+      const jobData: JobResponse = await response.json()
+      setJob(jobData)
+
+      const questionResponse = await fetch(
+        `http://localhost:8080/api/jobs/${jobData.jobId}/questions`
+      )
+
+      if (!questionResponse.ok) throw new Error('Unable to load questions.')
+
+      setQuestions(await questionResponse.json())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const submitAnswer = async (questionId: number) => {
+    const answer = answers[questionId]?.trim()
+
+    if (!answer) {
+      setError('Please enter an answer before submitting.')
+      return
+    }
+
+    setSubmitting(questionId)
+    setError('')
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/questions/${questionId}/answers`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer }),
+        }
+      )
+
+      if (!response.ok) throw new Error('Unable to evaluate your answer.')
+
+      const evaluation: Evaluation = await response.json()
+
+      setEvaluations((previous) => ({
+        ...previous,
+        [questionId]: evaluation,
+      }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setSubmitting(null)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="navbar">
+        <div className="brand">
+          <div className="brand-icon">✦</div>
+          <span>Interview<span className="brand-highlight">IQ</span></span>
         </div>
-        <div>
-          <h1>Get started</h1>
+        <div className="nav-label">AI-POWERED INTERVIEW PREPARATION</div>
+        <div className="status">
+          <span className="status-dot"></span>
+          Gemini AI connected
+        </div>
+      </header>
+
+      <main className="main-content">
+        <section className="hero">
+          <div className="eyebrow">YOUR PERSONAL AI INTERVIEW COACH</div>
+          <h1>Prepare smarter.<br /><span>Interview confidently.</span></h1>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            Turn any job description into a personalized interview practice
+            session. Get AI-generated questions and actionable feedback.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </section>
 
-      <div className="ticks"></div>
+        <section className="input-card">
+          <div className="card-heading">
+            <div>
+              <div className="step-label">STEP 01</div>
+              <h2>Start with a job description</h2>
+              <p>Paste the job description you're preparing for.</p>
+            </div>
+            <div className="document-icon">▤</div>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <textarea
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder="Paste the job description here..."
+          />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <div className="form-footer">
+            <span>{jobDescription.length} characters</span>
+            <button
+              onClick={generateInterview}
+              disabled={loading || !jobDescription.trim()}
+            >
+              {loading ? 'Generating with Gemini...' : '✦ Generate Interview →'}
+            </button>
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+        </section>
+
+        {job && (
+          <section className="results-section">
+            <div className="results-heading">
+              <div>
+                <div className="step-label">STEP 02 · AI ANALYSIS COMPLETE</div>
+                <h2>Your personalized interview</h2>
+              </div>
+              <span className="generated-badge">✦ Generated by Gemini</span>
+            </div>
+
+            <div className="job-summary">
+              <div>
+                <span className="summary-label">JOB TITLE</span>
+                <h3>{job.title}</h3>
+              </div>
+              <div>
+                <span className="summary-label">EXPERIENCE LEVEL</span>
+                <h3>{job.seniority}</h3>
+              </div>
+              <div>
+                <span className="summary-label">QUESTIONS</span>
+                <h3>{job.questionCount}</h3>
+              </div>
+            </div>
+
+            <div className="skills-section">
+              <h3>Identified skills</h3>
+              <div className="skills-list">
+                {job.skills.map((skill) => (
+                  <span className="skill-tag" key={skill}>{skill}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="questions-heading">
+              <h3>Interview questions</h3>
+              <span>{questions.length} questions</span>
+            </div>
+
+            <div className="question-list">
+              {questions.map((question, index) => {
+                const evaluation = evaluations[question.id]
+
+                return (
+                  <article className="question-card" key={question.id}>
+                    <div className="question-number">
+                      {String(index + 1).padStart(2, '0')}
+                    </div>
+
+                    <div className="question-content">
+                      <p>{question.text}</p>
+
+                      <div className="question-tags">
+                        <span>{question.skill}</span>
+                        <span>{question.category}</span>
+                      </div>
+
+                      <textarea
+                        className="answer-input"
+                        placeholder="Write your interview answer here..."
+                        value={answers[question.id] || ''}
+                        onChange={(e) =>
+                          setAnswers((previous) => ({
+                            ...previous,
+                            [question.id]: e.target.value,
+                          }))
+                        }
+                      />
+
+                      <button
+                        className="evaluate-button"
+                        disabled={submitting !== null}
+                        onClick={() => submitAnswer(question.id)}
+                      >
+                        {submitting === question.id
+                          ? 'Gemini is evaluating...'
+                          : evaluation
+                            ? '↻ Evaluate Again'
+                            : '✦ Evaluate My Answer'}
+                      </button>
+
+                      {evaluation && (
+                        <div className="evaluation-panel">
+                          <div className="evaluation-title">
+                            <h3>AI Evaluation</h3>
+                            <span>
+                              Overall: {evaluation.overallScore.toFixed(1)}/5
+                            </span>
+                          </div>
+
+                          <div className="score-grid">
+                            <div className="score-box">
+                              <span>Clarity</span>
+                              <strong>{evaluation.clarity}/5</strong>
+                            </div>
+                            <div className="score-box">
+                              <span>Specificity</span>
+                              <strong>{evaluation.specificity}/5</strong>
+                            </div>
+                            <div className="score-box">
+                              <span>Depth</span>
+                              <strong>{evaluation.depth}/5</strong>
+                            </div>
+                          </div>
+
+                          <div className="feedback-box">
+                            <h4>Feedback</h4>
+                            <p>{evaluation.feedback}</p>
+                          </div>
+
+                          <div className="feedback-box improvement-box">
+                            <h4>How to improve</h4>
+                            <p>{evaluation.improvementTip}</p>
+                          </div>
+
+                          {evaluation.supportingQuotes.length > 0 && (
+                            <div className="feedback-box">
+                              <h4>Supporting quotes from your answer</h4>
+                              {evaluation.supportingQuotes.map((quote, i) => (
+                                <blockquote key={i}>"{quote}"</blockquote>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="latency">
+                            Evaluated by Gemini · {evaluation.latencyMs} ms
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer>
+        Built with React, Spring Boot, PostgreSQL & Gemini AI
+      </footer>
+    </div>
   )
 }
 

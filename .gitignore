@@ -7,3 +7,17 @@ application-local.yml
 
 # OS
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Backend / Gradle build artifacts
+backend/build/
+backend/bin/
+.gradle/

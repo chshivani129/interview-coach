@@ -1,22 +1,32 @@
 services:
   db:
     image: postgres:16
+    container_name: interview-coach-db
     environment:
-      POSTGRES_DB: coach
-      POSTGRES_USER: coach
-      POSTGRES_PASSWORD: coach
+      POSTGRES_DB: ${POSTGRES_DB:-coach}
+      POSTGRES_USER: ${POSTGRES_USER:-coach}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coach}
     ports: ["5433:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coach} -d ${POSTGRES_DB:-coach}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   prometheus:
     image: prom/prometheus
+    container_name: interview-coach-prometheus
     volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml"]
     ports: ["9090:9090"]
     extra_hosts: ["host.docker.internal:host-gateway"]
 
   grafana:
     image: grafana/grafana
+    container_name: interview-coach-grafana
     ports: ["3000:3000"]
+    volumes: ["grafana_data:/var/lib/grafana"]
 
 volumes:
   pgdata:
+  grafana_data:

@@ -14,10 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                                "https://interview-coach-n6z5gveig-shivani-challagullas-projects.vercel.app",
-                                "https://interview-coach-topaz-rho.vercel.app"
-                        )
+                        .allowedOriginPatterns("https://*.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

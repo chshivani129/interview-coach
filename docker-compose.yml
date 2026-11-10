@@ -17,7 +17,9 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: interview-coach-prometheus
-    volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/grafana-cloud-token:/etc/prometheus/grafana-cloud-token:ro
     ports: ["9090:9090"]
     extra_hosts: ["host.docker.internal:host-gateway"]
 

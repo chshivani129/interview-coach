@@ -4,7 +4,6 @@
 .env.*
 application-local.yaml
 application-local.yml
-
 # OS
 .DS_Store
 
@@ -21,3 +20,4 @@ frontend/dist/
 backend/build/
 backend/bin/
 .gradle/
+monitoring/grafana-cloud-token
